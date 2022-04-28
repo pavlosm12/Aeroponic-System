@@ -1,0 +1,12 @@
+//Connect photoResistor to Pin 0
+int photoResistorPin = 0;
+//Raw analog value of photoResistor
+float photoValue;
+
+
+//Function to be called inside loop()
+void Ky_018 ()
+{
+photoValue = analogRead(photoResistorPin);
+photoValue = map(photoValue, 0, 1023, 100, 0);
+}

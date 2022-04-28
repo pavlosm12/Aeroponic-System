@@ -1,0 +1,136 @@
+#include <SoftwareSerial.h>
+#include <tmp36>
+#include <ky018>
+#include <dht11> //DHT11 attached to pin 2
+#define rxPin 9
+#define txPin 10
+
+SoftwareSerial mySerial =  SoftwareSerial(rxPin, txPin);
+
+ 
+unsigned long period = 2500;
+unsigned long period2 = 2000;
+unsigned long time_now = 0;
+unsigned long time_now2 = 0;
+unsigned long led_on = 1000;
+unsigned long led_off = 1000;
+// Variables will change:
+int ledState = LOW;             // ledState used to set the LED
+unsigned long previousMillis = 0;        // will store last time LED was updated
+unsigned long currentMillis ;
+uint8_t timepicker = 0;
+int ledstrip_duration = 0;
+int ledstrip_pwm = 0;
+
+
+//LED Pinout
+int led1 = 3;
+int led2 = 4;
+int led3 = 5;
+int pwmLed = 255;
+int state_led1 = 0;
+int blink_enable = 0;
+// Parameters for Bluetooth interface and timing
+int incoming;                           // variable to store byte received from phone 
+int id = -1;                            // received identification byte
+int val_byte1 = -1;                     // most significant byte of data value
+int val_byte2 = -1;                     // least significant byte of data value
+
+//Devices IDs
+int photoValue_ID = 5; 
+int tmp36_temperature_ID = 6;
+int humidity_ID = 7;
+int tempdht11_ID = 8;
+
+
+void reset_rx_BT() {   // function to erase all bytes (set to -1)
+  id = -1;
+  val_byte1 = -1;
+  val_byte2 = -1;
+}
+
+
+void send_BT(int id, int value) {       // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+  mySerial.write(128 + id);
+  mySerial.write(floor(value/128));       // MSB
+  mySerial.write(value%128);              // LSB
+}
+
+
+void mySerial_check ()
+{
+
+if (mySerial.available()) 
+  {
+    incoming = mySerial.read();           // Read what we receive and store in "incoming"
+
+    if (incoming > 127) {               // ID bytes are 128 or higher, so check if incoming byte is an ID-byte
+      reset_rx_BT();                    // reset id and data to -1
+      id = incoming - 128;              // write id value
+    }
+    else if (val_byte1 == -1) {         // if incoming byte is lower than 128 it is a data byte. Check if first data byte is empty (-1)
+      val_byte1 = incoming;             // write first data byte (MSB)
+    }
+    else if (val_byte2 == -1) {         // check if second data byte is empty (-1)
+      val_byte2 = incoming;             // write second data byte (LSB)
+      int value = 128*val_byte1 + val_byte2;          // recombine the first and second data byte to the actual value that was sent from the phone
+      // here is the location that you can implement the code what you want to do with the controller id and value received from the phone
+      
+      if (id == 1)
+      {
+          state_led1 = value;
+         
+      }
+      else if (id == 2)
+      {
+          blink_enable = value;
+
+      }
+      else if (id == 4)
+      {
+      led_on = value;
+      }
+      else if (id == 7)
+      {
+      led_off = value;
+      }
+      else if (id == 8)
+      {
+        pwmLed = value;
+      }
+
+// LED STRIP LOGIC
+
+if (id == 9){
+timepicker = value;
+}
+else if (id == 10)
+{
+ledstrip_duration = value;
+}
+else if (id == 11)
+{
+
+ledstrip_pwm = value;
+
+}
+
+
+
+
+
+     
+      Serial.print("Id: "); Serial.print(id); Serial.print(", val: "); Serial.println(value);   // for debugging write to the serial interface (check with serial monitor)
+     
+     send_BT(tmp36_temperature_ID, temp36_temperature_scaled) ;     // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+     send_BT(photoValue_ID, photoValue);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+     send_BT(humidity_ID, h_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+     send_BT(tempdht11_ID, t_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+
+     
+     reset_rx_BT();                    // not strictly needed, but just in case erase all bytes (set to -1)
+    }
+  }
+
+
+}

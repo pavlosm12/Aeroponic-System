@@ -1,0 +1,102 @@
+#include <Wire.h>
+#include <SPI.h>
+#include <RTClib.h>
+#include <time.h>
+
+
+
+// Variables to count square wave pulses
+int ticks = 0;
+int old_tick_value = 0;
+uint8_t hour = 0;
+uint8_t old_hour_value = 0;
+uint8_t minute = 0;
+uint8_t old_minute_value = 0;
+
+RTC_DS3231 rtc;
+
+char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+
+
+void DS3132_p_setup_adjust() {
+
+if (! rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+    Serial.flush();
+    while (1) delay(10);
+  }
+
+  if (rtc.lostPower()) {
+    Serial.println("RTC lost power, let's set the time!");
+    // When time needs to be set on a new device, or after a power loss, the
+    // following line sets the RTC to the date & time this sketch was compiled
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    // This line sets the RTC with an explicit date & time, for example to set
+    // January 21, 2014 at 3am you would call:
+    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
+  }
+
+  // When time needs to be re-set on a previously configured device, the
+  // following line sets the RTC to the date & time this sketch was compiled
+  // rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  // This line sets the RTC with an explicit date & time, for example to set
+  // January 21, 2014 at 3am you would call:
+  // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
+
+
+
+}
+
+void DS3132_p_setup_sqw(){
+
+rtc.writeSqwPinMode(DS3231_SquareWave1Hz);
+pinMode(2, INPUT); //Configure the SQWinput pin as an INPUT to monitor the SQW pin of the DS3231.
+digitalWrite (2, HIGH); //Enable the internal pull-up resistor, since the SQW pin on the DS3231 is an Open Drain output.
+
+
+}
+
+
+void print2digits(int number) {
+  if (number >= 0 && number < 10) {
+    Serial.write('0');
+  }
+  Serial.print(number, DEC);
+}
+
+void print_time ()
+{
+  
+
+// Update serial monitor display if a second has elapsed  
+if (ticks != old_tick_value) {
+        old_tick_value = ticks;
+
+        DateTime now = rtc.now();
+        hour = now.hour();
+        minute = now.minute();
+    Serial.print(now.day(), DEC);
+    Serial.print('/');
+    Serial.print(now.month(), DEC);
+    Serial.print('/');
+    Serial.print(now.year(), DEC);
+    Serial.print(" (");
+    Serial.print(daysOfTheWeek[now.dayOfTheWeek()]);
+    Serial.print(") ");
+   // Serial.print(now.hour(), DEC);
+   print2digits(now.hour());
+    Serial.print(':');
+   // Serial.print(now.minute(), DEC);
+   print2digits(now.minute());
+    Serial.print(':');
+    //Serial.print(now.second(), DEC);
+    print2digits(now.second());
+    Serial.println();
+
+    Serial.print("Temperature: ");
+    Serial.print(rtc.getTemperature());
+    Serial.println(" C");
+
+    Serial.println();
+    }
+}

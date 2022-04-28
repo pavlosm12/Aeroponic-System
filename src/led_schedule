@@ -1,0 +1,35 @@
+
+
+
+/* 
+
+//Switch 1 Variables:
+int state_l1 = 0;
+int state_prev_l1 = 0;
+int val_l1 = 0;
+
+
+
+void SM_ledstrip()
+{
+state_prev_l1 = state_l1;
+
+//State Machine Section
+  switch (state_l1) {
+
+    case 0: //RESET!
+      //Catch all "home base" for the State MAchine
+      state_l1 = 1;
+    break;
+
+    case 1:
+    if (timepicker == hour){
+
+      state_l1 = 2;
+    }
+    else { state_l1 = 3;}
+  break;
+
+              }
+}
+*/
