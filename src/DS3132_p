@@ -10,8 +10,12 @@ int ticks = 0;
 int old_tick_value = 0;
 uint8_t hour = 0;
 uint8_t old_hour_value = 0;
-uint8_t minute = 0;
-uint8_t old_minute_value = 0;
+uint8_t minutes = 0;
+uint8_t old_minutes_value = 0;
+uint8_t seconds = 0;
+uint8_t old_seconds_value = 0;
+int seconds_counter = 0;
+int minute_counter = 0;
 
 RTC_DS3231 rtc;
 
@@ -72,9 +76,14 @@ void print_time ()
 if (ticks != old_tick_value) {
         old_tick_value = ticks;
 
+
+
         DateTime now = rtc.now();
         hour = now.hour();
-        minute = now.minute();
+        minutes = now.minute();
+        seconds = now.second();
+
+
     Serial.print(now.day(), DEC);
     Serial.print('/');
     Serial.print(now.month(), DEC);
@@ -92,11 +101,28 @@ if (ticks != old_tick_value) {
     //Serial.print(now.second(), DEC);
     print2digits(now.second());
     Serial.println();
-
+  /*
     Serial.print("Temperature: ");
     Serial.print(rtc.getTemperature());
     Serial.println(" C");
+*/
 
-    Serial.println();
+
+    Serial.print("Minutes_Counter = ");
+    Serial.print(minute_counter);
+    Serial.print(" // ");
+    Serial.print("Seconds_Counter = ");
+    Serial.println(seconds_counter);
+
+      Serial.print("MINUTES = ");
+    Serial.println(minutes);
+
+        Serial.print("SECONDS = ");
+    Serial.println(seconds);
+
+          Serial.print("ticks = ");
+    Serial.println(ticks);
+
+
     }
 }

@@ -1,35 +1,146 @@
+#include <DS3132_p>
+#include <Bluetooth_module>
 
 
+int state_led1 = 0 ;
+int state_prev_led1 = 0;
 
-/* 
+void SM_led1 () {
 
-//Switch 1 Variables:
-int state_l1 = 0;
-int state_prev_l1 = 0;
-int val_l1 = 0;
+state_prev_led1 = state_led1;
 
+//state machine section
 
-
-void SM_ledstrip()
+switch (state_led1)
 {
-state_prev_l1 = state_l1;
-
-//State Machine Section
-  switch (state_l1) {
-
-    case 0: //RESET!
-      //Catch all "home base" for the State MAchine
-      state_l1 = 1;
-    break;
-
-    case 1:
-    if (timepicker == hour){
-
-      state_l1 = 2;
-    }
-    else { state_l1 = 3;}
+  case 0: //RESET
+  state_led1 = 1;
   break;
 
-              }
+  case 1: //Check TimePicker & Initialize
+  if (timepicker == minutes){state_led1 = 2;}
+  break;
+
+  case 2: //Set PWM
+  analogWrite(led3, ledstrip_pwm);
+  minute_counter = ledstrip_duration *60;
+  state_led1 = 3;
+  break;
+
+  case 3:
+
+  if (seconds != old_seconds_value) {
+        old_seconds_value = seconds;
+        minute_counter--;
+
+if (minute_counter <= 0)
+{
+  state_led1 = 4;
 }
-*/
+  }
+    break;
+
+    case 4:
+  analogWrite(led3, ledstrip_pwm2);
+  minute_counter = ledstrip_duration2 *60;
+  state_led1 = 5;
+    break;
+
+    case 5:
+    
+  if (seconds != old_seconds_value) {
+        old_seconds_value = seconds;
+        minute_counter--;
+
+if (minute_counter <= 0)
+{
+  state_led1 = 6;
+}
+  }
+    break;
+
+  case 6:
+  analogWrite(led3, ledstrip_pwm3);
+  minute_counter = ledstrip_duration3 *60;
+  state_led1 = 7;
+    break;
+
+    case 7:
+    
+  if (seconds != old_seconds_value) {
+        old_seconds_value = seconds;
+        minute_counter--;
+
+if (minute_counter <= 0)
+{
+  state_led1 = 8;
+}
+  }
+    break;
+
+
+
+    case 8:
+    analogWrite(led3, 0);
+  
+    timepicker = -1;
+    state_led1 = 0;
+    break;
+
+
+}
+
+}
+
+
+void print_state_led1 (){
+if(state_led1 != state_prev_led1)
+{
+Serial.print("                     STATE LED 1 = ") ; 
+Serial.println(state_led1);
+}
+}
+
+
+
+void test12 (){
+
+ if(millis() >= time_now2 + period2)
+{
+  Tmp36();
+  Ky_018();
+  Dht_11();
+        time_now2 += period2;
+  send_BT(tmp36_temperature_ID,temp36_temperature_scaled);  
+  send_BT(photoValue_ID,photoValue);
+  send_BT(humidity_ID, h_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+  send_BT(tempdht11_ID, t_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+}
+ 
+ 
+
+if (blink_enable == 1)
+{
+currentMillis = millis();
+if((ledState == HIGH) && (currentMillis - previousMillis >= led_on))
+    {
+    	ledState = LOW;  // Turn it off
+      previousMillis = currentMillis;  // Remember the time
+      digitalWrite(led2, ledState);  // Update the actual LED
+    }
+    else if ((ledState == LOW) && (currentMillis - previousMillis >= led_off))
+    {
+      ledState = HIGH;  // turn it on
+      previousMillis = currentMillis;   // Remember the time
+      digitalWrite(led2, ledState);	  // Update the actual LED
+    }    
+}
+
+ if (blink_enable == 0)
+{
+  ledState = LOW;
+  digitalWrite(led2, ledState);
+}
+   
+
+}

@@ -18,9 +18,13 @@ unsigned long led_off = 1000;
 int ledState = LOW;             // ledState used to set the LED
 unsigned long previousMillis = 0;        // will store last time LED was updated
 unsigned long currentMillis ;
-uint8_t timepicker = 0;
+uint8_t timepicker = -1;
 int ledstrip_duration = 0;
 int ledstrip_pwm = 0;
+int ledstrip_duration2 = 0;
+int ledstrip_pwm2 = 0;
+int ledstrip_duration3 = 0;
+int ledstrip_pwm3 = 0;
 
 
 //LED Pinout
@@ -28,7 +32,7 @@ int led1 = 3;
 int led2 = 4;
 int led3 = 5;
 int pwmLed = 255;
-int state_led1 = 0;
+int state_pump = 0;
 int blink_enable = 0;
 // Parameters for Bluetooth interface and timing
 int incoming;                           // variable to store byte received from phone 
@@ -76,47 +80,53 @@ if (mySerial.available())
       int value = 128*val_byte1 + val_byte2;          // recombine the first and second data byte to the actual value that was sent from the phone
       // here is the location that you can implement the code what you want to do with the controller id and value received from the phone
       
-      if (id == 1)
-      {
-          state_led1 = value;
-         
-      }
-      else if (id == 2)
-      {
-          blink_enable = value;
 
-      }
-      else if (id == 4)
-      {
-      led_on = value;
-      }
-      else if (id == 7)
-      {
-      led_off = value;
-      }
-      else if (id == 8)
-      {
-        pwmLed = value;
-      }
+  
 
-// LED STRIP LOGIC
 
-if (id == 9){
-timepicker = value;
-}
-else if (id == 10)
-{
-ledstrip_duration = value;
-}
-else if (id == 11)
+
+switch (id)
 {
 
-ledstrip_pwm = value;
+case 1:  state_pump = value;
+break;
 
+case 2:  blink_enable = value;
+break;
+
+case 3:
+break;
+
+case 4: led_on = value;
+break;
+
+case 5: led_off = value;
+break;
+
+case 6:  pwmLed = value;
+break;
+
+case 7: timepicker = value;
+break;
+
+case 8: ledstrip_duration = value;
+break;
+
+case 9: ledstrip_pwm = value;
+break;
+
+case 10: ledstrip_duration2 = value;
+break;
+
+case 11: ledstrip_pwm2 = value;
+break;
+
+case 12: ledstrip_duration3 = value;
+break;
+
+case 13: ledstrip_pwm3 = value;
+break;
 }
-
-
-
 
 
      
@@ -134,3 +144,47 @@ ledstrip_pwm = value;
 
 
 }
+
+/*
+
+      if (id == 1)
+      {
+          state_pump = value;
+         
+      }
+      else if (id == 2)
+      {
+          blink_enable = value;
+
+      }
+      else if (id == 4)
+      {
+      led_on = value;
+      }
+      else if (id == 5)
+      {
+      led_off = value;
+      }
+      else if (id == 6)
+      {
+        pwmLed = value;
+      }
+
+// LED STRIP LOGIC
+
+if (id == 7){
+timepicker = value;
+}
+else if (id == 8)
+{
+ledstrip_duration = value;
+}
+else if (id == 9)
+{
+
+ledstrip_pwm = value;
+
+}
+
+
+*/
