@@ -56,8 +56,10 @@ void loop() {
 
 
 //analogWrite(led3, pwmLed);
-digitalWrite(led1,state_pump);
+if (blink_enable == 0){
 
+digitalWrite(led1,pump_button);
+}
 
 
 
@@ -78,7 +80,9 @@ if(millis() >= time_now + period)
 print_time ();
 
 SM_led1();
+SM_pump ();
 print_state_led1 ();
+print_state_pump ();
 
 
 

@@ -1,6 +1,8 @@
 #include <DS3132_p>
 #include <Bluetooth_module>
-
+//SM_pump() variables
+int state_pump = 0 ;
+int state_prev_pump = 0;
 
 int state_led1 = 0 ;
 int state_prev_led1 = 0;
@@ -17,23 +19,26 @@ switch (state_led1)
   state_led1 = 1;
   break;
 
-  case 1: //Check TimePicker & Initialize
-  if (timepicker == minutes){state_led1 = 2;}
-  break;
+ case 1: //Check TimePicker & Initialize
+ if ((timepicker_hours == hours) && (timepicker_minutes == minutes)){state_led1 = 2;}
+break;
+
+//case 44: //Check TimePicker & Initialize
+// if (timepicker_minutes == minutes){state_led1 = 2;}
+//break;
 
   case 2: //Set PWM
   analogWrite(led3, ledstrip_pwm);
-  minute_counter = ledstrip_duration *60;
+  hours_counter = ledstrip_duration;
   state_led1 = 3;
   break;
 
   case 3:
+  if (hours != old_hours_value) {
+        old_hours_value = hours;
+        hours_counter--;
 
-  if (seconds != old_seconds_value) {
-        old_seconds_value = seconds;
-        minute_counter--;
-
-if (minute_counter <= 0)
+if (hours_counter < 0)
 {
   state_led1 = 4;
 }
@@ -42,17 +47,18 @@ if (minute_counter <= 0)
 
     case 4:
   analogWrite(led3, ledstrip_pwm2);
-  minute_counter = ledstrip_duration2 *60;
+  hours_counter = ledstrip_duration2;
   state_led1 = 5;
     break;
 
     case 5:
     
-  if (seconds != old_seconds_value) {
-        old_seconds_value = seconds;
-        minute_counter--;
+  if (hours != old_hours_value) {
+        old_hours_value = hours;
+        hours_counter--;
 
-if (minute_counter <= 0)
+
+if (hours_counter <= 0)
 {
   state_led1 = 6;
 }
@@ -61,32 +67,30 @@ if (minute_counter <= 0)
 
   case 6:
   analogWrite(led3, ledstrip_pwm3);
-  minute_counter = ledstrip_duration3 *60;
+  hours_counter = ledstrip_duration3 ;
   state_led1 = 7;
     break;
 
     case 7:
     
-  if (seconds != old_seconds_value) {
-        old_seconds_value = seconds;
-        minute_counter--;
+  if (hours != old_hours_value) {
+        old_hours_value = hours;
+        hours_counter--;
 
-if (minute_counter <= 0)
+if (hours_counter <= 0)
 {
   state_led1 = 8;
 }
   }
     break;
-
-
-
+    
     case 8:
     analogWrite(led3, 0);
   
-    timepicker = -1;
+    timepicker_hours = -1; // To may remove this
+    timepicker_minutes = -1; // and this
     state_led1 = 0;
     break;
-
 
 }
 
@@ -101,6 +105,13 @@ Serial.println(state_led1);
 }
 }
 
+void print_state_pump (){
+if(state_pump != state_prev_pump)
+{
+Serial.print("\n \n \t STATE PUMP = ") ; 
+Serial.println(state_pump);
+}
+}
 
 
 void test12 (){
@@ -138,9 +149,86 @@ if((ledState == HIGH) && (currentMillis - previousMillis >= led_on))
 
  if (blink_enable == 0)
 {
-  ledState = LOW;
-  digitalWrite(led2, ledState);
+  state_pump = 1;
 }
    
 
+}
+
+
+
+
+void SM_pump () {
+
+state_prev_pump = state_pump;
+
+//state machine section
+
+switch (state_pump)
+{
+  case 0: //RESET
+  state_pump = 1;
+  break;
+
+  case 1: //Do nothing and wait for pump enable. Turn off pump and procceed.
+  
+  if (blink_enable == 1)
+  {
+  digitalWrite(led1, LOW);
+  state_pump = 2;
+  }
+  break;
+
+ case 2: //Update offDuration value
+ if (blink_enable == 1)
+ {
+   
+   state_pump = 3;
+ }
+break;
+
+  case 3: //turn pump off and procceed.
+  digitalWrite(led1, LOW);
+  seconds_counter = pump_offDuration * 60; 
+  state_pump = 4;
+  break;
+
+  case 4: // Start offDuration Timer
+  if (seconds != old_seconds_value) {
+        old_seconds_value = seconds;
+        seconds_counter--;    
+if (seconds_counter <= 0)
+{
+  state_pump = 5;
+}
+  }
+    break;
+
+    case 5: //update on-Duration value.
+    digitalWrite(led1, HIGH);
+    seconds_counter = pump_onDuration;
+    state_pump = 6;
+    break;
+
+    case 6: // Turn on pump
+   
+    state_pump = 7;
+    break;
+
+    case 7: //Start onDuration Timer
+if (seconds != old_seconds_value) {
+        old_seconds_value = seconds;
+        seconds_counter--;
+        
+if (seconds_counter <=0)
+{
+  state_pump = 8;
+}
+  }
+  break;
+    case 8: // Make timer Zero and go to state 0
+    seconds_counter = 0;
+    state_pump = 0;
+    break;
+  }
 }
