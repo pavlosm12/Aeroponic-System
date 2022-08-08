@@ -84,7 +84,7 @@ if (ticks != old_tick_value) {
         minutes = now.minute();
         seconds = now.second();
 
-
+/*
     Serial.print(now.day(), DEC);
     Serial.print('/');
     Serial.print(now.month(), DEC);
@@ -102,25 +102,25 @@ if (ticks != old_tick_value) {
     //Serial.print(now.second(), DEC);
     print2digits(now.second());
     Serial.println();
-  /*
+  
     Serial.print("Temperature: ");
     Serial.print(rtc.getTemperature());
     Serial.println(" C");
 */
 
-    Serial.print("Hours_Counter = ");
-    Serial.print(hours_counter);
-    Serial.print("\t//\t");
-    Serial.print("Minutes_Counter = ");
-    Serial.print(minutes_counter);
-    Serial.print("\t//\t");
+   // Serial.print("Hours_Counter = ");
+    //Serial.print(hours_counter);
+   // Serial.print("\t//\t");
+   // Serial.print("Minutes_Counter = ");
+   // Serial.print(minutes_counter);
+   // Serial.print("\t//\t");
     Serial.print("Seconds_Counter = ");
     Serial.println(seconds_counter);
     Serial.println();
-    Serial.print("HOURS = ");
-    Serial.print(hours);
-    Serial.print("\t: \tMINUTES = ");
-    Serial.print(minutes);
+   // Serial.print("HOURS = ");
+   // Serial.print(hours);
+   // Serial.print("\t: \tMINUTES = ");
+    //Serial.print(minutes);
     Serial.print("\t:\tSECONDS = ");
     Serial.print(seconds);
     Serial.print("\t \t TICKS = ");

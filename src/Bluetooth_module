@@ -1,43 +1,58 @@
 #include <SoftwareSerial.h>
 #include <tmp36>
-#include <ky018>
-#include <dht11> //DHT11 attached to pin 2
+#include <TSL2561>
+#include <SHTC3>
+#include <Wire.h>
+#include <EEPROM.h>
+#include <pressure_ultrasonic_sensors>
 #define rxPin 9
 #define txPin 10
 
 SoftwareSerial mySerial =  SoftwareSerial(rxPin, txPin);
 
  
-unsigned long period = 2500;
 unsigned long period2 = 2000;
-unsigned long time_now = 0;
 unsigned long time_now2 = 0;
-unsigned long led_on = 1000;
-unsigned long led_off = 1000;
 // Variables will change:
-int ledState = LOW;             // ledState used to set the LED
-unsigned long previousMillis = 0;        // will store last time LED was updated
-unsigned long currentMillis ;
-uint8_t timepicker_hours = -1;
-uint8_t timepicker_minutes = -1;
-int ledstrip_duration = 1;
-int ledstrip_pwm = 0;
-int ledstrip_duration2 = 1;
-int ledstrip_pwm2 = 0;
-int ledstrip_duration3 = 1;
-int ledstrip_pwm3 = 0;
 
 
+
+
+
+//SAVE BUTTON 3rd
+int save_button = 0;
 //LED Pinout
 int led1 = 3;
-int led2 = 4;
-int led3 = 5;
+int led2 = 5;
+int led3 = 6;
 int pwmLed = 255;
-//pump var
-int pump_button = 0;
+
+//pump variables
+int Manual_ON_OFF = 0;
+int Auto_EN_DIS = 1;
 int pump_onDuration = 5;
 int pump_offDuration = 1;
 int blink_enable = 1;
+unsigned long pump_onDuration_UL;
+unsigned long pump_offDuration_UL;
+
+//light variables
+int Auto_light_adjustment_ON_OFF = 1;
+int light_onDuration = 12;
+int light_Intensity = 255; //Manual light intensity
+uint8_t timepicker_hours = -1;
+uint8_t timepicker_minutes = -1;
+
+//pressure variables
+int Upper_pressure_TH = 6;
+int Lower_pressure_TH = 1.5;
+
+//water tank variable
+int WaterTank_Alarm_Level = 25;
+
+//save button
+int Save_Global = 0;
+
 // Parameters for Bluetooth interface and timing
 int incoming;                           // variable to store byte received from phone 
 int id = -1;                            // received identification byte
@@ -45,10 +60,14 @@ int val_byte1 = -1;                     // most significant byte of data value
 int val_byte2 = -1;                     // least significant byte of data value
 
 //Devices IDs
-int photoValue_ID = 5; 
-int tmp36_temperature_ID = 6;
-int humidity_ID = 7;
-int tempdht11_ID = 8;
+int temp_SHTC3_ID = 5;
+int humidity_SHTC3_ID = 6;
+int TSL2561_LUX_ID = 7;
+int TSL2561_FSpec_ID = 8;
+int TSL2561_IR_ID = 9 ; 
+int pressure_ID = 10;
+int ultrasonic_ID = 11;
+
 
 
 void reset_rx_BT() {   // function to erase all bytes (set to -1)
@@ -92,49 +111,49 @@ if (mySerial.available())
 switch (id)
 {
 
-case 1:  pump_button = value;
+case 1: Manual_ON_OFF = value;
 break;
 
-case 2:  blink_enable = value;
+case 2: pump_onDuration = value;
 break;
 
-case 3:
+case 3: Auto_EN_DIS = value;
 break;
 
-case 4: pump_onDuration = value;
+case 4: pump_offDuration = value;
 break;
 
-case 5: pump_offDuration = value;
+case 5: Auto_light_adjustment_ON_OFF = value;
 break;
 
-case 6:  pwmLed = value;
+case 6:  light_onDuration = value;
 break;
 
-case 7:
+case 7: Save_Global = value;
 break;
 
-case 8: ledstrip_duration = value;
+case 8: light_Intensity = value;
 break;
 
-case 9: ledstrip_pwm = value;
+case 9: timepicker_hours = value;
 break;
 
-case 10: ledstrip_duration2 = value;
+case 10: Upper_pressure_TH = value;
 break;
 
-case 11: ledstrip_pwm2 = value;
+case 11: timepicker_minutes = value;
 break;
 
-case 12: ledstrip_duration3 = value;
+case 12: Lower_pressure_TH = value;
 break;
 
-case 13: ledstrip_pwm3 = value;
+case 13:
 break;
 
-case 14: timepicker_minutes = value;
+case 14: WaterTank_Alarm_Level = value;
 break;
 
-case 15: timepicker_hours = value;
+case 15: 
 break;
 }
 
@@ -142,10 +161,10 @@ break;
      
       Serial.print("Id: "); Serial.print(id); Serial.print(", val: "); Serial.println(value);   // for debugging write to the serial interface (check with serial monitor)
      
-     send_BT(tmp36_temperature_ID, temp36_temperature_scaled) ;     // function to write id and value to the bluetooth interface (and split value in MSB and LSB
-     send_BT(photoValue_ID, photoValue);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
-     send_BT(humidity_ID, h_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
-     send_BT(tempdht11_ID, t_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+     //send_BT(tmp36_temperature_ID, temp36_temperature_scaled) ;     // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+     //send_BT(photoValue_ID, TSL2561.readFSpecLuminosity());    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+     //send_BT(humidity_ID, h_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+     //send_BT(tempdht11_ID, t_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
 
      
      reset_rx_BT();                    // not strictly needed, but just in case erase all bytes (set to -1)
@@ -154,4 +173,186 @@ break;
 
 
 }
+
+
+
+
+ 
+void writeIntIntoEEPROM(int address, int number)
+{ 
+  EEPROM.update(address, number >> 8);
+  EEPROM.update(address + 1, number & 0xFF);
+}
+int readIntFromEEPROM(int address)
+{
+  return (EEPROM.read(address) << 8) + EEPROM.read(address + 1);
+}
+ 
+
+
+
+int state_writeEEPROM = 0;
+int state_prev_writeEEPROM = 0;
+
+void SM_writeEEPROM()
+{
+
+state_prev_writeEEPROM = state_writeEEPROM;
+switch (state_writeEEPROM)
+
+{
+case 0: //RESET
+state_writeEEPROM = 1;
+break;
+
+case 1: //Stand-by
+// wait for the "save button" to be pressed and then procceed.
+break;
+
+case 2:
+
+state_writeEEPROM = 3;
+break;
+
+case 3:
+
+writeIntIntoEEPROM(0,  pump_onDuration);
+Serial.print("PUMP ON = ");
+Serial.println(pump_onDuration);
+state_writeEEPROM = 4;
+break;
+
+case 4:
+//writeEEPROM(4, timepicker_hours , EEPROM_I2C_ADDRESS);
+writeIntIntoEEPROM(2, pump_offDuration);
+Serial.print("PUMP OFF = ");
+Serial.println(pump_offDuration);
+state_writeEEPROM = 5;
+break;
+
+case 5:
+//writeEEPROM(6, timepicker_minutes, EEPROM_I2C_ADDRESS);
+state_writeEEPROM = 6;
+break;
+
+case 6:
+//writeEEPROM(8, ledstrip_duration, EEPROM_I2C_ADDRESS);
+state_writeEEPROM = 7;
+break;
+
+case 7:
+//writeEEPROM(10, ledstrip_pwm, EEPROM_I2C_ADDRESS);
+state_writeEEPROM = 8;
+break;
+
+case 8:
+//writeEEPROM(12, ledstrip_duration2, EEPROM_I2C_ADDRESS);
+state_writeEEPROM = 9;
+break;
+
+case 9:
+//writeEEPROM(14, ledstrip_pwm2, EEPROM_I2C_ADDRESS);
+state_writeEEPROM = 10;
+break;
+
+case 10:
+//writeEEPROM(16, ledstrip_duration3, EEPROM_I2C_ADDRESS);
+state_writeEEPROM = 11;
+break;
+
+case 11:
+//writeEEPROM(18, ledstrip_pwm3, EEPROM_I2C_ADDRESS);
+state_writeEEPROM = 12;
+break;
+
+case 12:
+state_writeEEPROM = 0;
+break;
+
+  }
+}
+
+
+int state_readEEPROM = 0;
+int state_prev_readEEPROM = 0;
+
+void SM_readEEPROM()
+{
+
+state_prev_readEEPROM = state_readEEPROM;
+switch (state_readEEPROM)
+
+{
+case 0: //stand-by
+
+break;
+
+case 1: 
+
+state_readEEPROM = 2;
+break;
+
+case 2:
+
+
+pump_onDuration =   readIntFromEEPROM(0);
+Serial.print("PUMP ON = ");
+Serial.println(pump_onDuration);
+state_readEEPROM = 3;
+break;
+
+case 3:
+//timepicker_hours = readEEPROM(4, EEPROM_I2C_ADDRESS);
+
+//pump_offDuration =  readEEPROM(0, EEPROM_I2C_ADDRESS);
+pump_offDuration = readIntFromEEPROM(2);
+Serial.print("PUMP OFF = ");
+Serial.println(pump_offDuration);
+state_readEEPROM = 4;
+break;
+
+case 4:
+//timepicker_minutes = readEEPROM(6, EEPROM_I2C_ADDRESS);
+state_readEEPROM = 5;
+break;
+
+case 5:
+//ledstrip_duration = readEEPROM(8, EEPROM_I2C_ADDRESS);
+state_readEEPROM = 6;
+break;
+
+case 6:
+//ledstrip_pwm = readEEPROM(10, EEPROM_I2C_ADDRESS);
+state_readEEPROM = 7;
+break;
+
+case 7:
+//ledstrip_duration2 = readEEPROM(12, EEPROM_I2C_ADDRESS);
+state_readEEPROM = 8;
+break;
+
+case 8:
+//ledstrip_pwm2 = readEEPROM(14, EEPROM_I2C_ADDRESS);
+state_readEEPROM = 9;
+break;
+
+case 9:
+//ledstrip_duration3 = readEEPROM(16, EEPROM_I2C_ADDRESS);
+state_readEEPROM = 10;
+break;
+
+case 10:
+//ledstrip_pwm3 = readEEPROM(18, EEPROM_I2C_ADDRESS);
+state_readEEPROM = 11;
+break;
+
+case 11:
+state_readEEPROM = 0;
+break;
+
+  }
+}
+
+
+
 

@@ -1,12 +1,7 @@
 #include <DS3132_p>
 #include <Bluetooth_module>
-//SM_pump() variables
-int state_pump = 0 ;
-int state_prev_pump = 0;
 
-int state_led1 = 0 ;
-int state_prev_led1 = 0;
-
+/*
 void SM_led1 () {
 
 state_prev_led1 = state_led1;
@@ -95,8 +90,26 @@ if (hours_counter <= 0)
 }
 
 }
+*/
+
+void print_state_readEEPROM (){
+if(state_readEEPROM != state_prev_readEEPROM)
+{
+Serial.print("                     STATE READ EEPROM = ") ; 
+Serial.println(state_readEEPROM);
+}
+}
+
+void print_state_writeEEPROM (){
+if(state_writeEEPROM != state_prev_writeEEPROM)
+{
+Serial.print("                     STATE WRITE EEPROM = ") ; 
+Serial.println(state_writeEEPROM);
+}
+}
 
 
+/*
 void print_state_led1 (){
 if(state_led1 != state_prev_led1)
 {
@@ -112,123 +125,113 @@ Serial.print("\n \n \t STATE PUMP = ") ;
 Serial.println(state_pump);
 }
 }
-
+*/
 
 void test12 (){
 
  if(millis() >= time_now2 + period2)
 {
   Tmp36();
-  Ky_018();
-  Dht_11();
+  shtc3();
+  tsl2561();
         time_now2 += period2;
-  send_BT(tmp36_temperature_ID,temp36_temperature_scaled);  
-  send_BT(photoValue_ID,photoValue);
-  send_BT(humidity_ID, h_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
-  send_BT(tempdht11_ID, t_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+ send_BT(temp_SHTC3_ID, t_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB       
+ send_BT(humidity_SHTC3_ID, h_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
+ send_BT(TSL2561_LUX_ID,TSL2561.readVisibleLux());
+ send_BT(TSL2561_FSpec_ID,TSL2561.readFSpecLuminosity());
+ send_BT(TSL2561_IR_ID,TSL2561.readIRLuminosity());
+ send_BT(pressure_ID, pressure_bar);  
+ send_BT(ultrasonic_ID,tank_level);
+ 
+ 
 }
  
  
 
-if (blink_enable == 1)
+
+if (Save_Global == 1)
 {
-currentMillis = millis();
-if((ledState == HIGH) && (currentMillis - previousMillis >= led_on))
-    {
-    	ledState = LOW;  // Turn it off
-      previousMillis = currentMillis;  // Remember the time
-      digitalWrite(led2, ledState);  // Update the actual LED
-    }
-    else if ((ledState == LOW) && (currentMillis - previousMillis >= led_off))
-    {
-      ledState = HIGH;  // turn it on
-      previousMillis = currentMillis;   // Remember the time
-      digitalWrite(led2, ledState);	  // Update the actual LED
-    }    
-}
 
- if (blink_enable == 0)
-{
-  state_pump = 1;
-}
-   
-
-}
-
-
-
-
-void SM_pump () {
-
-state_prev_pump = state_pump;
-
-//state machine section
-
-switch (state_pump)
-{
-  case 0: //RESET
-  state_pump = 1;
-  break;
-
-  case 1: //Do nothing and wait for pump enable. Turn off pump and procceed.
+  state_writeEEPROM = 2;
   
-  if (blink_enable == 1)
-  {
-  digitalWrite(led1, LOW);
-  state_pump = 2;
-  }
-  break;
+}
 
- case 2: //Update offDuration value
- if (blink_enable == 1)
- {
-   
-   state_pump = 3;
- }
-break;
-
-  case 3: //turn pump off and procceed.
-  digitalWrite(led1, LOW);
-  seconds_counter = pump_offDuration * 60; 
-  state_pump = 4;
-  break;
-
-  case 4: // Start offDuration Timer
-  if (seconds != old_seconds_value) {
-        old_seconds_value = seconds;
-        seconds_counter--;    
-if (seconds_counter <= 0)
+/*if (Save_Global == 1)
 {
-  state_pump = 5;
-}
-  }
-    break;
+  state_readEEPROM = 1;
 
-    case 5: //update on-Duration value.
-    digitalWrite(led1, HIGH);
-    seconds_counter = pump_onDuration;
-    state_pump = 6;
-    break;
-
-    case 6: // Turn on pump
-   
-    state_pump = 7;
-    break;
-
-    case 7: //Start onDuration Timer
-if (seconds != old_seconds_value) {
-        old_seconds_value = seconds;
-        seconds_counter--;
-        
-if (seconds_counter <=0)
-{
-  state_pump = 8;
 }
-  }
-  break;
-    case 8: // Make timer Zero and go to state 0
-    seconds_counter = 0;
-    state_pump = 0;
-    break;
-  }
+*/
 }
+
+
+
+
+
+
+
+const int pump = 2; // define relay pin
+int state_pump = 0;
+int state_prev_pump = 0;
+int val_pump = 0;
+unsigned long t_pump = 0; //Previous Millis()
+unsigned long t_0_pump = 0; //Current Millis()
+
+
+
+
+void SM_pump() {
+  //Almost every state needs these lines, so I'll put it outside the State Machine
+  
+  state_prev_pump = state_pump;
+  pump_onDuration_UL = pump_onDuration * 1000;
+  pump_offDuration_UL = pump_offDuration * 60000;
+  //State Machine Section
+  switch (state_pump) {
+    case 0: //RESET!
+    //
+  digitalWrite(pump, LOW);
+  state_pump = 1;
+    break;
+    
+    case 1: //WAIT
+      //Do nothing.  Only the top level(main) loop can force us out of this state into state 2 "TURN ON"
+    break;
+  
+ case 2: //TURN ON
+      //Start pump, record time then proceed to ON, 
+      digitalWrite(pump,HIGH);
+      t_0_pump = millis();
+      state_pump = 3;
+    break;
+       
+ case 3: //ON
+      //Wait for time to elapse, then proceed to TURN OFF
+      t_pump = millis();
+      if (t_pump - t_0_pump > pump_onDuration_UL) {state_pump = 4;}
+    break;  
+    
+ case 4: //TURN OFF
+      //, turn off relay, proceed to OFF
+      
+      t_0_pump = millis();
+      digitalWrite(pump,LOW);
+      state_pump = 5;
+    break; 
+    
+ case 5: //OFF
+      t_pump = millis();
+      if (t_pump - t_0_pump > pump_offDuration_UL) {state_pump = 6;}
+    
+      //if (beep_count_led1 >= beep_number_led1) {state_led1 = 0;}
+    break;
+ case 6: //RECORD CURRENT TIME
+      t_0_pump = millis();
+      state_pump = 7;
+	 break; 
+ case 7: //WAIT THEN FINISH
+      t_pump = millis();
+      if (t_pump - t_0_pump > 200) {state_pump = 0;}
+	 break;   
+  	}
+  }
