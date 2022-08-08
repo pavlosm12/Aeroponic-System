@@ -126,66 +126,98 @@ Serial.println(state_pump);
 }
 }
 */
+ int pump_state = LOW;
 
 void test12 (){
 
  if(millis() >= time_now2 + period2)
 {
-  Tmp36();
-  shtc3();
-  tsl2561();
-        time_now2 += period2;
+  Serial.println("\n \t");
+ // Serial.print(tank_level);
+  Serial.println("\n \t");
+ //  Serial.print(distance);
+  Serial.print(pump_state);
+ shtc3();
+ tsl2561();
+ pressure();
+
  send_BT(temp_SHTC3_ID, t_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB       
  send_BT(humidity_SHTC3_ID, h_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
  send_BT(TSL2561_LUX_ID,TSL2561.readVisibleLux());
  send_BT(TSL2561_FSpec_ID,TSL2561.readFSpecLuminosity());
  send_BT(TSL2561_IR_ID,TSL2561.readIRLuminosity());
  send_BT(pressure_ID, pressure_bar);  
- send_BT(ultrasonic_ID,tank_level);
+ //send_BT(ultrasonic_ID,tank_level);
  
- 
+ time_now2 += period2;
 }
  
  
 
 
-if (Save_Global == 1)
+
+}
+
+
+
+
+
+
+
+const int pump = 4; // define pump pin
+//int state_pump = 0;
+//int state_prev_pump = 0;
+//int val_pump = 0;
+//unsigned long t_pump = 0; //Previous Millis()
+//unsigned long t_0_pump = 0; //Current Millis()
+unsigned long prev_millis = 0;
+
+ 
+
+void pumpTimings()
 {
 
-  state_writeEEPROM = 2;
-  
-}
+  pump_onDuration_UL = pump_onDuration * 1000;
+  pump_offDuration_UL = pump_offDuration * 1000;
+ // check to see if it's time to change the state of the pump
+ 
 
-/*if (Save_Global == 1)
+  if (Auto_EN_DIS != 0)
 {
-  state_readEEPROM = 1;
+
+ Manual_ON_OFF = 0;
+ unsigned long currentMillis = millis();
+ // HIGH = OFF . LOW = ON // LOW LVL RELAY MODULE
+  if((pump_state == HIGH) && (currentMillis - prev_millis >= pump_onDuration_UL))
+  {
+    pump_state = LOW;  // Turn it off
+    prev_millis = currentMillis;  // Remember the time
+    digitalWrite(pump, !pump_state);  // Update the actual pump
+  }
+  else if ((pump_state == LOW) && (currentMillis - prev_millis >= pump_offDuration_UL))
+  {
+    pump_state = HIGH;  // turn it on
+    prev_millis = currentMillis;   // Remember the time
+    digitalWrite(pump, !pump_state);	  // Update the actual pump
+  }
+ }
+ 
+ if (Auto_EN_DIS !=1)
+{
+
+digitalWrite (pump,!Manual_ON_OFF);
 
 }
-*/
 }
 
-
-
-
-
-
-
-const int pump = 2; // define relay pin
-int state_pump = 0;
-int state_prev_pump = 0;
-int val_pump = 0;
-unsigned long t_pump = 0; //Previous Millis()
-unsigned long t_0_pump = 0; //Current Millis()
-
-
-
-
+/*
 void SM_pump() {
   //Almost every state needs these lines, so I'll put it outside the State Machine
   
   state_prev_pump = state_pump;
   pump_onDuration_UL = pump_onDuration * 1000;
   pump_offDuration_UL = pump_offDuration * 60000;
+  int pump_state = LOW;
   //State Machine Section
   switch (state_pump) {
     case 0: //RESET!
@@ -195,6 +227,7 @@ void SM_pump() {
     break;
     
     case 1: //WAIT
+    if (Auto_EN_DIS == 1) { state_pump = 2;}
       //Do nothing.  Only the top level(main) loop can force us out of this state into state 2 "TURN ON"
     break;
   
@@ -235,3 +268,4 @@ void SM_pump() {
 	 break;   
   	}
   }
+  */

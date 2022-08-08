@@ -1,5 +1,4 @@
 #include <SoftwareSerial.h>
-#include <tmp36>
 #include <TSL2561>
 #include <SHTC3>
 #include <Wire.h>
@@ -20,19 +19,12 @@ unsigned long time_now2 = 0;
 
 
 //SAVE BUTTON 3rd
-int save_button = 0;
-//LED Pinout
-int led1 = 3;
-int led2 = 5;
-int led3 = 6;
-int pwmLed = 255;
 
 //pump variables
 int Manual_ON_OFF = 0;
 int Auto_EN_DIS = 1;
 int pump_onDuration = 5;
 int pump_offDuration = 1;
-int blink_enable = 1;
 unsigned long pump_onDuration_UL;
 unsigned long pump_offDuration_UL;
 
@@ -102,10 +94,12 @@ if (mySerial.available())
       val_byte2 = incoming;             // write second data byte (LSB)
       int value = 128*val_byte1 + val_byte2;          // recombine the first and second data byte to the actual value that was sent from the phone
       // here is the location that you can implement the code what you want to do with the controller id and value received from the phone
-      
+   
 
-  
+  Serial.print("Id: "); Serial.print(id); Serial.print(", val: "); Serial.println(value);
 
+    
+//reset_rx_BT();   
 
 
 switch (id)
@@ -158,8 +152,9 @@ break;
 }
 
 
+
      
-      Serial.print("Id: "); Serial.print(id); Serial.print(", val: "); Serial.println(value);   // for debugging write to the serial interface (check with serial monitor)
+        // for debugging write to the serial interface (check with serial monitor)
      
      //send_BT(tmp36_temperature_ID, temp36_temperature_scaled) ;     // function to write id and value to the bluetooth interface (and split value in MSB and LSB
      //send_BT(photoValue_ID, TSL2561.readFSpecLuminosity());    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
@@ -167,13 +162,13 @@ break;
      //send_BT(tempdht11_ID, t_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
 
      
-     reset_rx_BT();                    // not strictly needed, but just in case erase all bytes (set to -1)
-    }
+                      // not strictly needed, but just in case erase all bytes (set to -1)
+    
+  }
   }
 
 
 }
-
 
 
 

@@ -13,11 +13,6 @@ const int pressureZero = 102.4; //analog reading of pressure transducer at 0psi
 const int pressureMax = 921.6; //analog reading of pressure transducer at 100psi
 const int pressuretransducermaxPSI = 232; //psi value of transducer being used
 
-const int sensorreadDelay = 250; //constant integer to set the sensor read delay in milliseconds
-
-
-const unsigned int TRIG_PIN=13; // digital output pin for Ultrasonic sensor
-const unsigned int ECHO_PIN=12; //digital input pin for Ultrasonic sensor
 
 
 float pressureValue = 0; //variable to store the value coming from the pressure transducer
@@ -29,21 +24,20 @@ void pressure() //loop routine runs over and over again forever
   pressureValue = analogRead(pressureInput); //reads value from input pin and assigns to variable
   pressureValue = ((pressureValue-pressureZero)*pressuretransducermaxPSI)/(pressureMax-pressureZero); //conversion equation to convert analog reading to psi
   pressure_bar = pressureValue * 0.068948;
-  Serial.print(pressureValue, 1); //prints value from previous line to serial
+ Serial.print(pressureValue, 1); //prints value from previous line to serial
   Serial.println("psi"); //prints label to serial
 
 }
 
 
-
-const int trigPin = 29; //set pin variables
-const int echoPin = 28;
+/*
+const int trigPin = 7; //set pin variables
+const int echoPin = 8;
 
 int trigState = LOW; //state of trigPin
-int interval = 1; // interval in milliseconds at which trigPin turns on
+unsigned long interval = 1000; // interval in milliseconds at which trigPin turns on
 unsigned long prevMillis = 0; //microsecond at which the pin was last writen
 unsigned long curMillis = 0;
-
 int duration = 0; //variables
 int distance = 0;
 int tank_level = 0;
@@ -77,6 +71,5 @@ void Ultrasonic_sensor_readings() // to be called within void loop()
 	//if (printState = HIGH){
 	//Serial.print(distance);
 	//Serial.println("cm");}
-	
-
-}
+	//}
+*/

@@ -114,19 +114,19 @@ if (ticks != old_tick_value) {
    // Serial.print("Minutes_Counter = ");
    // Serial.print(minutes_counter);
    // Serial.print("\t//\t");
-    Serial.print("Seconds_Counter = ");
-    Serial.println(seconds_counter);
-    Serial.println();
+   // Serial.print("Seconds_Counter = ");
+   // Serial.println(seconds_counter);
+   // Serial.println();
    // Serial.print("HOURS = ");
    // Serial.print(hours);
    // Serial.print("\t: \tMINUTES = ");
     //Serial.print(minutes);
-    Serial.print("\t:\tSECONDS = ");
-    Serial.print(seconds);
-    Serial.print("\t \t TICKS = ");
-    Serial.println(ticks);
-    Serial.println();
-
+    //Serial.print("\t:\tSECONDS = ");
+    //Serial.print(seconds);
+   // Serial.print("\t \t TICKS = ");
+   // Serial.println(ticks);
+   // Serial.println();
+//
 
     }
 }
