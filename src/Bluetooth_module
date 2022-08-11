@@ -1,9 +1,9 @@
 #include <SoftwareSerial.h>
-#include <TSL2561>
+#include <TSL2561B>
 #include <SHTC3>
 #include <Wire.h>
 #include <EEPROM.h>
-#include <pressure_ultrasonic_sensors>
+#include <ultrasonic_sensor>
 #define rxPin 9
 #define txPin 10
 
@@ -28,19 +28,37 @@ int pump_offDuration = 1;
 unsigned long pump_onDuration_UL;
 unsigned long pump_offDuration_UL;
 
+//fan variable
+int fanPwm = 0;
+const int fanPin = 3; 
+
 //light variables
+const int light = 5; // define pin for Light (PWM pin)
 int Auto_light_adjustment_ON_OFF = 1;
 int light_onDuration = 12;
 int light_Intensity = 255; //Manual light intensity
 uint8_t timepicker_hours = -1;
 uint8_t timepicker_minutes = -1;
 
-//pressure variables
+//pressure variables //water tank variable
+
+
+
+const int pressureInput = A0; //select the analog input pin for the pressure transducer
+const int pressureZero = 102.4; //analog reading of pressure transducer at 0psi
+const int pressureMax = 921.6; //analog reading of pressure transducer at 100psi
+const int pressuretransducermaxPSI = 232; //psi value of transducer being used
+
+
+float pressureValue = 0; //variable to store the value coming from the pressure transducer
+float pressure_bar = 0;
+
 int Upper_pressure_TH = 6;
 int Lower_pressure_TH = 1.5;
 
-//water tank variable
 int WaterTank_Alarm_Level = 25;
+const int buzzer = 12; //define alarm pin
+int set_alarm = 0; //activates the alarm function
 
 //save button
 int Save_Global = 0;
@@ -59,6 +77,11 @@ int TSL2561_FSpec_ID = 8;
 int TSL2561_IR_ID = 9 ; 
 int pressure_ID = 10;
 int ultrasonic_ID = 11;
+int TSL2561_LUX_ID_underscaled = 12;
+int TSL2561_FSpec_ID_underscaled = 13;
+int TSL2561_IR_ID_underscaled = 14 ;
+int hours_ID = 15;
+int minutes_ID = 16;
 
 
 
@@ -141,7 +164,7 @@ break;
 case 12: Lower_pressure_TH = value;
 break;
 
-case 13:
+case 13: fanPwm = value;
 break;
 
 case 14: WaterTank_Alarm_Level = value;
@@ -261,9 +284,13 @@ state_writeEEPROM = 12;
 break;
 
 case 12:
-state_writeEEPROM = 0;
+Save_Global = 0;
+
 break;
 
+case 13:
+state_writeEEPROM = 0;
+break;
   }
 }
 

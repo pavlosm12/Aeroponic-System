@@ -21,13 +21,16 @@ void setup() {
   Wire.begin();
   // put your setup code here, to run once:
   pinMode(pump, OUTPUT);
+  pinMode(fanPin, OUTPUT);
+  pinMode(light, OUTPUT);
   pinMode(rxPin, INPUT);
   pinMode(txPin, OUTPUT);
   
-
+ultrasonic_setup();
 shtc3_setup();  //shtc3
-tsl2561_setup();
-//Ultrasonic_sensor_setup();
+TSL2561B_setup();
+//tsl2561_setup();
+
   
   attachInterrupt(0,handleInt,FALLING); // Attach Interrupt to pin D2
 
@@ -43,11 +46,17 @@ tsl2561_setup();
 
 void loop() {
  // -------------------- Receive Bluetooth signal ----------------------
+ ultrasonic_sensor();
  test12();
  mySerial_check();
  pumpTimings();
+ SM_light ();
+ print_time ();
+ pressure();
 
-//print_time ();
+ //SAVE BUTTON
+//if (Save_Global == 1) {state_writeEEPROM = 2;};
+
 
 //SM_led1();
 //Ultrasonic_sensor_readings();

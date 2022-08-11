@@ -75,7 +75,7 @@ void shtc3() {
   //scale temperature and save it as an integer
   tempSHTC3_temp = mySHTC3.toDegC();
   t_scaled = round(100 * tempSHTC3_temp);
-  printInfo();                                                // This function is used to print a nice little line of info to the serial port
+ // printInfo();                                                // This function is used to print a nice little line of info to the serial port
                                                    // Delay for the data rate you want - note that measurements take ~10 ms so the fastest data rate is 100 Hz (when no delay is used)
 }
 
