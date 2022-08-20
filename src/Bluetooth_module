@@ -10,35 +10,29 @@
 SoftwareSerial mySerial =  SoftwareSerial(rxPin, txPin);
 
  
-unsigned long period2 = 2000;
+unsigned long period2 = 5000;
 unsigned long time_now2 = 0;
-// Variables will change:
 
-
-
-
-
-//SAVE BUTTON 3rd
 
 //pump variables
 int Manual_ON_OFF = 0;
 int Auto_EN_DIS = 1;
 int pump_onDuration = 5;
-int pump_offDuration = 1;
+int pump_offDuration = 5;
 unsigned long pump_onDuration_UL;
 unsigned long pump_offDuration_UL;
 
 //fan variable
 int fanPwm = 0;
-const int fanPin = 3; 
+const int fanPin = 6; 
 
 //light variables
 const int light = 5; // define pin for Light (PWM pin)
 int Auto_light_adjustment_ON_OFF = 1;
 int light_onDuration = 12;
 int light_Intensity = 255; //Manual light intensity
-uint8_t timepicker_hours = -1;
-uint8_t timepicker_minutes = -1;
+uint8_t timepicker_hours = 9;
+uint8_t timepicker_minutes = 00;
 
 //pressure variables //water tank variable
 
@@ -51,13 +45,14 @@ const int pressuretransducermaxPSI = 232; //psi value of transducer being used
 
 
 float pressureValue = 0; //variable to store the value coming from the pressure transducer
+float psi_scaled = 0; // *100 to roundup and send over bluetooth
 float pressure_bar = 0;
 
-int Upper_pressure_TH = 6;
-int Lower_pressure_TH = 1.5;
+int Upper_pressure_TH = 87;
+int Lower_pressure_TH = 24;
 
 int WaterTank_Alarm_Level = 25;
-const int buzzer = 12; //define alarm pin
+const int buzzer = 7; //define alarm pin
 int set_alarm = 0; //activates the alarm function
 
 //save button
@@ -207,8 +202,6 @@ int readIntFromEEPROM(int address)
 }
  
 
-
-
 int state_writeEEPROM = 0;
 int state_prev_writeEEPROM = 0;
 
@@ -234,61 +227,84 @@ break;
 
 case 3:
 
-writeIntIntoEEPROM(0,  pump_onDuration);
-Serial.print("PUMP ON = ");
-Serial.println(pump_onDuration);
+writeIntIntoEEPROM(0,  Manual_ON_OFF);
+Serial.print("Manual_ON_OFF = ");
+Serial.println(Manual_ON_OFF);
 state_writeEEPROM = 4;
 break;
 
 case 4:
-//writeEEPROM(4, timepicker_hours , EEPROM_I2C_ADDRESS);
-writeIntIntoEEPROM(2, pump_offDuration);
-Serial.print("PUMP OFF = ");
-Serial.println(pump_offDuration);
+writeIntIntoEEPROM(2, pump_onDuration);
+Serial.print("PUMP ON = ");
+Serial.println(pump_onDuration);
 state_writeEEPROM = 5;
 break;
 
 case 5:
-//writeEEPROM(6, timepicker_minutes, EEPROM_I2C_ADDRESS);
+writeIntIntoEEPROM(4, Auto_EN_DIS);
+Serial.print("AUTO_EN_DIS = ");
+Serial.println(Auto_EN_DIS);
 state_writeEEPROM = 6;
 break;
 
 case 6:
-//writeEEPROM(8, ledstrip_duration, EEPROM_I2C_ADDRESS);
+writeIntIntoEEPROM(6, pump_offDuration);
+Serial.print("PUMP OFF = ");
+Serial.println(pump_offDuration);
 state_writeEEPROM = 7;
 break;
 
 case 7:
-//writeEEPROM(10, ledstrip_pwm, EEPROM_I2C_ADDRESS);
+writeIntIntoEEPROM(8, Auto_light_adjustment_ON_OFF);
 state_writeEEPROM = 8;
 break;
 
 case 8:
-//writeEEPROM(12, ledstrip_duration2, EEPROM_I2C_ADDRESS);
+writeIntIntoEEPROM(10, light_onDuration);
 state_writeEEPROM = 9;
 break;
 
 case 9:
-//writeEEPROM(14, ledstrip_pwm2, EEPROM_I2C_ADDRESS);
+writeIntIntoEEPROM(12, light_Intensity);
 state_writeEEPROM = 10;
 break;
 
 case 10:
-//writeEEPROM(16, ledstrip_duration3, EEPROM_I2C_ADDRESS);
+writeIntIntoEEPROM(14, timepicker_hours);
 state_writeEEPROM = 11;
 break;
 
 case 11:
-//writeEEPROM(18, ledstrip_pwm3, EEPROM_I2C_ADDRESS);
+writeIntIntoEEPROM(16, Upper_pressure_TH);
 state_writeEEPROM = 12;
 break;
 
 case 12:
-Save_Global = 0;
-
+writeIntIntoEEPROM(18, timepicker_minutes);
+state_writeEEPROM = 13;
 break;
 
 case 13:
+writeIntIntoEEPROM(20, Lower_pressure_TH);
+state_writeEEPROM = 14;
+break;
+
+case 14:
+writeIntIntoEEPROM(22, fanPwm);
+state_writeEEPROM = 15;
+break;
+
+case 15:
+writeIntIntoEEPROM(24, WaterTank_Alarm_Level);
+state_writeEEPROM = 16;
+break;
+
+case 16:
+Save_Global = 0;
+state_writeEEPROM = 17 ;
+break;
+
+case 17:
 state_writeEEPROM = 0;
 break;
   }
@@ -305,71 +321,110 @@ state_prev_readEEPROM = state_readEEPROM;
 switch (state_readEEPROM)
 
 {
-case 0: //stand-by
-
+case 0: 
+state_readEEPROM = 1;
 break;
 
 case 1: 
-
 state_readEEPROM = 2;
 break;
 
 case 2:
-
-
-pump_onDuration =   readIntFromEEPROM(0);
-Serial.print("PUMP ON = ");
-Serial.println(pump_onDuration);
 state_readEEPROM = 3;
 break;
 
 case 3:
-//timepicker_hours = readEEPROM(4, EEPROM_I2C_ADDRESS);
-
-//pump_offDuration =  readEEPROM(0, EEPROM_I2C_ADDRESS);
-pump_offDuration = readIntFromEEPROM(2);
-Serial.print("PUMP OFF = ");
-Serial.println(pump_offDuration);
+Manual_ON_OFF = readIntFromEEPROM(0);
+Serial.print("Manual_ON_OFF = ");
+Serial.println(Manual_ON_OFF);
 state_readEEPROM = 4;
 break;
 
 case 4:
-//timepicker_minutes = readEEPROM(6, EEPROM_I2C_ADDRESS);
+pump_onDuration = readIntFromEEPROM(2);
+Serial.print("pump_onDuration = ");
+Serial.println(pump_onDuration);
 state_readEEPROM = 5;
 break;
 
 case 5:
-//ledstrip_duration = readEEPROM(8, EEPROM_I2C_ADDRESS);
+Auto_EN_DIS = readIntFromEEPROM(4);
+Serial.print("Auto_EN_DIS = ");
+Serial.println(Auto_EN_DIS);
 state_readEEPROM = 6;
 break;
 
 case 6:
-//ledstrip_pwm = readEEPROM(10, EEPROM_I2C_ADDRESS);
+pump_offDuration = readIntFromEEPROM(6);
+Serial.print("pump_offDuration = ");
+Serial.println(pump_offDuration);
 state_readEEPROM = 7;
 break;
 
 case 7:
-//ledstrip_duration2 = readEEPROM(12, EEPROM_I2C_ADDRESS);
+Auto_light_adjustment_ON_OFF = readIntFromEEPROM(8);
+Serial.print("Auto_LIGHT_ON_OFF = ");
+Serial.println(Auto_light_adjustment_ON_OFF);
 state_readEEPROM = 8;
 break;
 
 case 8:
-//ledstrip_pwm2 = readEEPROM(14, EEPROM_I2C_ADDRESS);
+light_onDuration = readIntFromEEPROM(10);
+Serial.print("light_onDuration = ");
+Serial.println(light_onDuration);
 state_readEEPROM = 9;
 break;
 
 case 9:
-//ledstrip_duration3 = readEEPROM(16, EEPROM_I2C_ADDRESS);
+light_Intensity = readIntFromEEPROM(12);
+Serial.print("Light Intensity = ");
+Serial.println(light_Intensity);
 state_readEEPROM = 10;
 break;
 
 case 10:
-//ledstrip_pwm3 = readEEPROM(18, EEPROM_I2C_ADDRESS);
+timepicker_hours = readIntFromEEPROM(14);
+Serial.print("Time Picker HOURS = ");
+Serial.println(timepicker_hours);
 state_readEEPROM = 11;
 break;
 
 case 11:
-state_readEEPROM = 0;
+Upper_pressure_TH = readIntFromEEPROM(16);
+Serial.print("Upper pressure = ");
+Serial.println(Upper_pressure_TH);
+state_readEEPROM = 12;
+break;
+
+case 12:
+timepicker_minutes = readIntFromEEPROM(18);
+Serial.print("Time picker MINUTES = ");
+Serial.println(timepicker_minutes);
+state_readEEPROM = 13;
+break;
+
+case 13:
+Lower_pressure_TH = readIntFromEEPROM(20);
+Serial.print("lower pressure = ");
+Serial.println(Lower_pressure_TH);
+state_readEEPROM = 14; 
+break;
+
+case 14:
+fanPwm = readIntFromEEPROM(22);
+Serial.print("Fan Pwm= ");
+Serial.println(fanPwm);
+state_readEEPROM = 15;
+break;
+
+case 15:
+WaterTank_Alarm_Level = readIntFromEEPROM(24);
+Serial.print("WaterTank Alarm = ");
+Serial.println(WaterTank_Alarm_Level);
+state_readEEPROM = 16;
+break;
+
+case 16:
 break;
 
   }

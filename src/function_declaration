@@ -5,7 +5,7 @@
 int state_prev_light = 0;
 int state_light = 0;
 int light_Schedule_dur;
-void SM_light () {
+void SM_light() {
 
 state_prev_light = state_light;
 
@@ -21,14 +21,14 @@ switch (state_light)
 break;
 
 
-  case 2: //Set PWM
+  case 2: //Convert slider value to hours, reset ticks and proceed
   
-  light_Schedule_dur = light_onDuration * 60; // ta 60 na ginoun 3600 meta th dokimh
+  light_Schedule_dur = light_onDuration * 3600; // ta 60 na ginoun 3600 meta th dokimh
   ticks = 0;
   state_light = 3;
   break;
 
-  case 3:
+  case 3: //Set pwm value, wait for the hours to pass, set pwm to LOW, reset ticks then procceed.
    analogWrite(light, light_Intensity);
 
 if (ticks >= light_Schedule_dur)
@@ -66,24 +66,7 @@ Serial.println(state_writeEEPROM);
 }
 
 
-/*
-void print_state_led1 (){
-if(state_led1 != state_prev_led1)
-{
-Serial.print("                     STATE LED 1 = ") ; 
-Serial.println(state_led1);
-}
-}
-
-void print_state_pump (){
-if(state_pump != state_prev_pump)
-{
-Serial.print("\n \n \t STATE PUMP = ") ; 
-Serial.println(state_pump);
-}
-}
-*/
- int pump_state = HIGH;
+int pump_state = HIGH;
 
 void pressure() //loop routine runs over and over again forever
 {
@@ -91,47 +74,42 @@ void pressure() //loop routine runs over and over again forever
   if (pump_state == LOW)
   {
   pressureValue = analogRead(pressureInput); //reads value from input pin and assigns to variable
-  }
-  else if ( pressureValue <= 0)
-  {
-    pressureValue = 0;
-  }
+  
   pressureValue = ((pressureValue-pressureZero)*pressuretransducermaxPSI)/(pressureMax-pressureZero); //conversion equation to convert analog reading to psi
-  pressure_bar = pressureValue * 0.068948;
-  //Serial.print(pressure_bar, 1); //prints value from previous line to serial
- // Serial.println("bar"); //prints label to serial
+
+  }
+  psi_scaled = round(100 * pressureValue);
 
 }
 
-void test12 (){
+void send_data(){
 
  if(millis() >= time_now2 + period2)
 {
+  /*
   Serial.println("\n \t");
  // Serial.print(tank_level);
   Serial.println("\n \t");
  //  Serial.print(distance);
   Serial.print(!pump_state);
-    Serial.println("\n \t");
- Serial.print(pressureValue);
   Serial.println("\n \t");
-
-Serial.print("Ping: ");
-   Serial.print(distance); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
-    Serial.println("cm");
+  Serial.print(pressureValue);
+  Serial.println("\t \t");
+  Serial.print(psi_scaled);
+  Serial.println("\t \t \t");
+*/
+  //Serial.print("Ping: ");
+ // Serial.print(waterTank_level); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
+  //Serial.println("cm");
  shtc3();
- //tsl2561();
  TSL2561B();
 
 send_BT(temp_SHTC3_ID, t_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB        
 send_BT(humidity_SHTC3_ID, h_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
-send_BT(pressure_ID, pressure_bar); 
+send_BT(pressure_ID, psi_scaled); 
 send_BT(hours_ID,hours);
 send_BT(minutes_ID,minutes);
 send_BT(ultrasonic_ID, waterTank_level);
- //send_BT(TSL2561_LUX_ID,TSL2561.readVisibleLux());
- //send_BT(TSL2561_FSpec_ID,TSL2561.readFSpecLuminosity());
- //send_BT(TSL2561_IR_ID,TSL2561.readIRLuminosity());
  
  if ((lux > 16000) && (lux <= 65535))
  {
@@ -163,12 +141,6 @@ send_BT(ultrasonic_ID, waterTank_level);
   send_BT(TSL2561_IR_ID, ir);
  }
  
-// send_BT(TSL2561_LUX_ID, lux);
-// send_BT(TSL2561_FSpec_ID, full);
- //send_BT(TSL2561_IR_ID, ir);
- 
- 
- 
  time_now2 += period2;
   }
 }
@@ -187,7 +159,7 @@ void pumpTimings()
 {
 
   pump_onDuration_UL = pump_onDuration * 1000;
-  pump_offDuration_UL = pump_offDuration * 1000;
+  pump_offDuration_UL = pump_offDuration * 60000; 
  // check to see if it's time to change the state of the pump
  
 
@@ -225,28 +197,43 @@ digitalWrite (pump,pump_state);
 
 
 
-/*
-/////////// TO TEST THE$ CODE BELOW!! /////////////////////
-
 int buzzer_state = LOW;
 unsigned long prev_millis2 = 0;
-unsigned long buzzer_onTime = 0;
-unsigned long buzzer_offTime = 0;
+unsigned long buzzer_onTime = 800;
+unsigned long buzzer_offTime = 3500;
 
 void buzzerTimings ()
 {
+
+if (waterTank_level < WaterTank_Alarm_Level)
+
+{
+  set_alarm = 1;
+}
+
+else if (( pressureValue < Lower_pressure_TH) || ( pressureValue > Upper_pressure_TH))
+{
+  set_alarm = 1;
+}
+else
+{
+  set_alarm = 0;
+  buzzer_state = LOW;
+  digitalWrite(buzzer, buzzer_state); 
+}
 
 
 if (set_alarm !=0)
 {
 
 unsigned long currentMillis2 = millis();
- // HIGH = OFF . LOW = ON // LOW LVL RELAY MODULE
+ 
   if((buzzer_state == HIGH) && (currentMillis2 - prev_millis2 >= buzzer_onTime))
   {
     buzzer_state = LOW;  // Turn it off
-    prev_millis = currentMillis2;  // Remember the time
+    prev_millis2 = currentMillis2;  // Remember the time
     digitalWrite(buzzer, buzzer_state);  // Update the actual pump
+  
   }
   else if ((buzzer_state == LOW) && (currentMillis2 - prev_millis2 >= buzzer_offTime))
   {
@@ -254,33 +241,7 @@ unsigned long currentMillis2 = millis();
     prev_millis2 = currentMillis2;   // Remember the time
     digitalWrite(buzzer, buzzer_state);	  // Update the actual pump
   }
-}
-}
-//// TO TEST THE CODE ABOVE ///////
-*/
 
-
-////TO TEST THE CODE BELOW///
-
-/*
-if ((pressure < Lower_pressure_TH) || (pressure > Upper_pressure_TH)
-{
-  set_alarm = 1;
 }
 
-else if (WaterTank_Alarm_Level < "WATER TANK LEVEL VALUE!!")
-
-{
-  set_alarm = 1;
 }
-
-else 
-{
-  set_alarm = 0;
-  buzzer_state = LOW;
-}
-
-
-*/
-
-////// TO TEST THE CODE ABOVE///

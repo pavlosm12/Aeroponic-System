@@ -33,7 +33,7 @@ void errorDecoder(SHTC3_Status_TypeDef message)                             // T
   }
 }
 
-
+/*
 void printInfo()
 {
   if(mySHTC3.lastStatus == SHTC3_Status_Nominal)              // You can also assess the status of the last command by checking the ".lastStatus" member of the object
@@ -51,17 +51,18 @@ void printInfo()
     Serial.println();
   }
 }
+*/
 
 void shtc3_setup() {
 
-  Serial.println("SHTC3 Example 1 - Basic Readings");    // Title
-  Serial.print("Beginning sensor. Result = ");           // Most SHTC3 functions return a variable of the type "SHTC3_Status_TypeDef" to indicate the status of their execution 
+ // Serial.println("SHTC3 Example 1 - Basic Readings");    // Title
+ // Serial.print("Beginning sensor. Result = ");           // Most SHTC3 functions return a variable of the type "SHTC3_Status_TypeDef" to indicate the status of their execution 
   errorDecoder(mySHTC3.begin());                              // To start the sensor you must call "begin()", the default settings use Wire (default Arduino I2C port)
-  Serial.println();
-  Serial.println("\n\n");
-  Serial.println("Waiting for 5 seconds so you can read this info ^^^");
+ // Serial.println();
+  //Serial.println("\n\n");
+  //Serial.println("Waiting for 5 seconds so you can read this info ^^^");
 
-  delay(5000);                                                // Give time to read the welcome message and device ID. 
+ // delay(5000);                                                // Give time to read the welcome message and device ID. 
 }
 
 float tempSHTC3_hum;
