@@ -10,7 +10,7 @@
 SoftwareSerial mySerial =  SoftwareSerial(rxPin, txPin);
 
  
-unsigned long period2 = 5000;
+unsigned long period2 = 2000;
 unsigned long time_now2 = 0;
 
 
@@ -99,7 +99,7 @@ void mySerial_check ()
 
 if (mySerial.available()) 
   {
-    incoming = mySerial.read();           // Read what we receive and store in "incoming"
+    incoming = mySerial.read(1);           // Read what we receive and store in "incoming"
 
     if (incoming > 127) {               // ID bytes are 128 or higher, so check if incoming byte is an ID-byte
       reset_rx_BT();                    // reset id and data to -1

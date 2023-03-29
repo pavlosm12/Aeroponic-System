@@ -4,7 +4,7 @@
 
 int state_prev_light = 0;
 int state_light = 0;
-int light_Schedule_dur;
+int light_Schedule_dur = 0;
 void SM_light() {
 
 state_prev_light = state_light;
@@ -17,29 +17,34 @@ switch (state_light)
   break;
 
  case 1: //Check TimePicker & Initialize
- if ((timepicker_hours == hours) && (timepicker_minutes == minutes)){state_light = 2;}
+ if ((timepicker_hours == hours) && (timepicker_minutes == minutes))
+ { //ticks = 0;
+   state_light = 2;
+  }
 break;
-
 
   case 2: //Convert slider value to hours, reset ticks and proceed
   
-  light_Schedule_dur = light_onDuration * 3600; // ta 60 na ginoun 3600 meta th dokimh
-  ticks = 0;
+  light_Schedule_dur = light_onDuration * 3600; 
+  //ticks = 0;
   state_light = 3;
   break;
 
   case 3: //Set pwm value, wait for the hours to pass, set pwm to LOW, reset ticks then procceed.
    analogWrite(light, light_Intensity);
 
-if (ticks >= light_Schedule_dur)
+   if (ticks != old_tick_value) 
+   {  light_Schedule_dur--;
+
+if (light_Schedule_dur <= 0)
 {
   state_light = 4;
 }
+   }
     break;
     
     case 4:
     analogWrite(light, LOW);
-    ticks = 0;
     state_light = 0;
     break;
 
@@ -48,6 +53,8 @@ if (ticks >= light_Schedule_dur)
 
 
 
+/*  Prints the current state of switch case of SM_writeEEPROM() function
+    for debugging purpose */
 
 void print_state_readEEPROM (){
 if(state_readEEPROM != state_prev_readEEPROM)
@@ -57,6 +64,8 @@ Serial.println(state_readEEPROM);
 }
 }
 
+/*  Prints the current state of switch case of SM_readEEPROM() function
+    for debugging purpose */
 void print_state_writeEEPROM (){
 if(state_writeEEPROM != state_prev_writeEEPROM)
 {
@@ -66,23 +75,32 @@ Serial.println(state_writeEEPROM);
 }
 
 
+void print_state_light (){
+if(state_light != state_prev_light)
+{
+Serial.print("                     STATE LIGHT = ") ; 
+Serial.println(state_light);
+}
+}
+
 int pump_state = HIGH;
 
-void pressure() //loop routine runs over and over again forever
+void pressure() 
 {
 
-  if (pump_state == LOW)
+  if (pump_state == HIGH) // checks if the pump is ON
   {
   pressureValue = analogRead(pressureInput); //reads value from input pin and assigns to variable
   
   pressureValue = ((pressureValue-pressureZero)*pressuretransducermaxPSI)/(pressureMax-pressureZero); //conversion equation to convert analog reading to psi
-
+  psi_scaled = round(100 * pressureValue);  // rounds the pressure value and multiplies it by 100
+  
   }
-  psi_scaled = round(100 * pressureValue);
+  
 
 }
 
-void send_data(){
+void send_data(){ // Sends data over bluetooth every 2 seconds 
 
  if(millis() >= time_now2 + period2)
 {
@@ -101,14 +119,14 @@ void send_data(){
   //Serial.print("Ping: ");
  // Serial.print(waterTank_level); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
   //Serial.println("cm");
- shtc3();
- TSL2561B();
+ shtc3(); // gets shtc3 Temperature and Humidity reading
+ TSL2561B(); // gets TSL2561 lux, full spectrum, ir readings
 
 send_BT(temp_SHTC3_ID, t_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB        
 send_BT(humidity_SHTC3_ID, h_scaled);    // function to write id and value to the bluetooth interface (and split value in MSB and LSB
-send_BT(pressure_ID, psi_scaled); 
 send_BT(hours_ID,hours);
 send_BT(minutes_ID,minutes);
+send_BT(pressure_ID, psi_scaled); 
 send_BT(ultrasonic_ID, waterTank_level);
  
  if ((lux > 16000) && (lux <= 65535))
@@ -185,8 +203,8 @@ void pumpTimings()
  
  if (Auto_EN_DIS !=1)
 {
-pump_state = !Manual_ON_OFF;
-digitalWrite (pump,pump_state);
+pump_state = Manual_ON_OFF;
+digitalWrite (pump,!pump_state);
 
 }
 }
