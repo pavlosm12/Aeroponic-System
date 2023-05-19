@@ -36,4 +36,6 @@ Arduino UNO R3 powered Automatic Aeroponic System.
  ### <b> 1.0 </b>
  
  • Initial Release.
-
+ 
+## Reference
+All the open source libraries that were used in this project can be found at platform.io file.
